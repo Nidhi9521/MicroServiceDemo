@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: centraldb-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: centraldb
+  template:
+    metadata:
+      labels:
+        app: centraldb
+    spec:
+      containers:
+        - name: centraldb
+          image: nidhi9521/centraldb
+          env:
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NATS_URI
+              value: http://nats-srv:4222
+            - name: NATS_CLUSTER_ID
+              value: rxshop
+            - name: MONGO_URI_CENTRALDB
+              value: mongodb://demo-mongo-srv:27017/central
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: centraldb-srv
+spec:
+  selector:
+    app: centraldb
+  ports:
+    - name: centraldb
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
